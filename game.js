@@ -1,95 +1,134 @@
 let player = document.getElementById("player");
 let game = document.getElementById("game");
-let scoreDisplay = document.getElementById("score");
+
+let scoreEl = document.getElementById("score");
+let coinsEl = document.getElementById("coins");
+let highEl = document.getElementById("highScore");
+
+let music = document.getElementById("bgMusic");
+let jumpSound = document.getElementById("jumpSound");
 
 let lane = 2;
 let score = 0;
-let speed = 3;
+let coins = 0;
+let speed = 4;
 let gameRunning = false;
 
-const lanePositions = {
-  1: 50,
-  2: 155,
-  3: 260
-};
+let highScore = localStorage.getItem("high") || 0;
+highEl.innerText = "High: " + highScore;
 
-function startGame() {
-  if (gameRunning) return;
+const lanePos = {1:50, 2:155, 3:260};
+
+// START GAME
+function startGame(){
+  if(gameRunning) return;
 
   gameRunning = true;
   score = 0;
-  speed = 3;
-  scoreDisplay.innerText = "Score: 0";
+  coins = 0;
+  speed = 4;
 
-  setInterval(createObstacle, 1200);
-  requestAnimationFrame(gameLoop);
+  music.play();
+
+  setInterval(spawn, 900);
+  requestAnimationFrame(loop);
 }
 
-// Player Movement
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" && lane > 1) lane--;
-  if (e.key === "ArrowRight" && lane < 3) lane++;
+// CONTROLS
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft" && lane>1) lane--;
+  if(e.key==="ArrowRight" && lane<3) lane++;
+  if(e.key==="ArrowUp") jump();
 });
 
-// Touch controls (mobile)
-document.addEventListener("touchstart", (e) => {
-  let x = e.touches[0].clientX;
-  if (x < window.innerWidth / 2 && lane > 1) lane--;
-  else if (lane < 3) lane++;
+// TOUCH
+let startX = 0;
+document.addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+document.addEventListener("touchend", e=>{
+  let diff = e.changedTouches[0].clientX - startX;
+  if(diff > 50 && lane<3) lane++;
+  if(diff < -50 && lane>1) lane--;
 });
 
-// Create Obstacles
-function createObstacle() {
-  if (!gameRunning) return;
-
-  let obs = document.createElement("div");
-  obs.classList.add("obstacle");
-
-  let randomLane = Math.floor(Math.random() * 3) + 1;
-  obs.classList.add("lane" + randomLane);
-  obs.dataset.lane = randomLane;
-
-  game.appendChild(obs);
+// JUMP
+function jump(){
+  player.style.bottom = "120px";
+  jumpSound.play();
+  setTimeout(()=>player.style.bottom="20px",300);
 }
 
-// Game Loop
-function gameLoop() {
-  if (!gameRunning) return;
+// SPAWN
+function spawn(){
+  if(!gameRunning) return;
 
-  player.style.left = lanePositions[lane] + "px";
+  let rand = Math.random();
 
-  let obstacles = document.querySelectorAll(".obstacle");
+  let obj = document.createElement("img");
 
-  obstacles.forEach(obs => {
-    let top = parseInt(obs.style.top || "-40");
+  if(rand < 0.7){
+    obj.src = "assets/obstacle.png";
+    obj.classList.add("obstacle");
+    obj.dataset.type = "obstacle";
+  } else {
+    obj.src = "assets/coin.png";
+    obj.classList.add("coin");
+    obj.dataset.type = "coin";
+  }
+
+  let laneNum = Math.floor(Math.random()*3)+1;
+  obj.classList.add("lane"+laneNum);
+  obj.dataset.lane = laneNum;
+
+  game.appendChild(obj);
+}
+
+// LOOP
+function loop(){
+  if(!gameRunning) return;
+
+  player.style.left = lanePos[lane]+"px";
+
+  let objs = document.querySelectorAll(".obstacle, .coin");
+
+  objs.forEach(o=>{
+    let top = parseInt(o.style.top || "-40");
     top += speed;
-    obs.style.top = top + "px";
+    o.style.top = top+"px";
 
-    // Collision Detection
-    if (
-      top > 420 &&
-      obs.dataset.lane == lane
-    ) {
-      gameOver();
+    // COLLISION
+    if(top > 420 && o.dataset.lane == lane){
+      if(o.dataset.type==="obstacle"){
+        endGame();
+      } else {
+        coins++;
+        coinsEl.innerText = "Coins: "+coins;
+        o.remove();
+      }
     }
 
-    // Remove off screen
-    if (top > 500) {
-      obs.remove();
+    if(top>550){
+      o.remove();
       score++;
-      scoreDisplay.innerText = "Score: " + score;
+      scoreEl.innerText="Score: "+score;
 
-      // Increase difficulty
-      if (score % 5 === 0) speed += 0.5;
+      if(score%10===0) speed += 0.5;
     }
   });
 
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-// Game Over
-function gameOver() {
-  alert("💀 Game Over! Score: " + score);
+// END GAME
+function endGame(){
   gameRunning = false;
+  music.pause();
+
+  if(score > highScore){
+    localStorage.setItem("high", score);
+  }
+
+  alert("Game Over 💀 Score: "+score);
   location.reload();
 }
