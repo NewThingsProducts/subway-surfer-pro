@@ -1,45 +1,50 @@
 body {
   text-align: center;
   font-family: Arial;
-  background: linear-gradient(#1e3c72, #2a5298);
+  background: linear-gradient(#000428, #004e92);
   color: white;
 }
 
 #game {
-  width: 350px;
-  height: 500px;
-  background: black;
+  width: 360px;
+  height: 550px;
   margin: auto;
+  background: url('https://i.imgur.com/8fK4h6K.png');
+  background-size: cover;
   position: relative;
   overflow: hidden;
   border: 4px solid white;
 }
 
 #player {
-  width: 40px;
-  height: 40px;
-  background: red;
+  width: 50px;
   position: absolute;
   bottom: 20px;
   left: 155px;
-  border-radius: 10px;
+  transition: 0.1s;
 }
 
-.obstacle {
+.obstacle, .coin {
   width: 40px;
-  height: 40px;
-  background: yellow;
   position: absolute;
   top: -40px;
-  border-radius: 8px;
+}
+
+.coin {
+  width: 30px;
 }
 
 .lane1 { left: 50px; }
 .lane2 { left: 155px; }
 .lane3 { left: 260px; }
 
+#hud {
+  margin: 10px;
+  display: flex;
+  justify-content: space-around;
+}
+
 button {
   padding: 10px 20px;
-  margin-top: 10px;
   font-size: 16px;
 }
